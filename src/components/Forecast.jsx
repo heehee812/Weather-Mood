@@ -1,25 +1,33 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
-import ForecastDisplay from 'components/ForecastDisplay.jsx';
+import WeatherDisplay from 'components/WeatherDisplay.jsx';
+import WeatherTable from 'components/WeatherTable.jsx';
 import WeatherForm from 'components/WeatherForm.jsx';
-import {getForecast} from 'api/open-weather-map.js';
+import {getForecast, cancelForecast} from 'api/open-weather-map.js';
 
-import './weather.css';
 import './Forecast.css';
 
 export default class Forecast extends React.Component {
+    static propTypes = {
+        unit: PropTypes.string,
+        onUnitChange: PropTypes.func
+    };
 
-    static getInitWeatherState() {
+    static getInitForecastState() {
+        let list = [];
+        for (let i = 0; i < 5; i++) {
+            list[i] = {
+                ts: -i,
+                code: -1,
+                group: 'na',
+                description: 'N/A',
+                temp: NaN
+            };
+        }
         return {
             city: 'na',
-            code: -1,
-            group: 'na',
-            description: 'N/A',
-            descriptionArr: [],
-            temp: NaN,
-            tempArr: [],
-            day: [],
-            unit: "metric"
+            list
         };
     }
 
@@ -27,17 +35,16 @@ export default class Forecast extends React.Component {
         super(props);
 
         this.state = {
-            ...Forecast.getInitWeatherState(),
-            loading: true,
-            masking: true
+            ...Forecast.getInitForecastState(),
+            loading: false,
+            masking: false
         };
 
-        // TODO
-        this.handleFormQueryForecast= this.handleFormQueryForecast.bind(this);
+        this.handleFormQuery = this.handleFormQuery.bind(this);
     }
 
     componentDidMount() {
-        this.getForecast('Hsinchu', 'metric');
+        this.getForecast('Hsinchu', this.props.unit);
     }
 
     componentWillUnmount() {
@@ -47,38 +54,43 @@ export default class Forecast extends React.Component {
     }
 
     render() {
+        const {unit, onUnitChange} = this.props;
+        const {city, list, masking} = this.state;
+        const tomorrow = list[0];
+        const rests = list.slice(1);
+
+        document.body.className = `weather-bg ${tomorrow.group}`;
+        document.querySelector('.weather-bg .mask').className = `mask ${masking ? 'masking' : ''}`;
+
         return (
-            <div className={`forecast weather-bg ${this.state.group}`}>
-                <div className={`mask ${this.state.masking ? 'masking' : ''}`}>
-                    <WeatherForm city={this.state.city} unit={this.props.unit} onQuery={this.handleFormQueryForecast}/>
-                    <ForecastDisplay {...this.state}/>
-                    <div id="forecast-display">
-                        <div className="col-sm-3 col-6">{this.state.day[1]}: {this.state.tempArr[1]}&ordm; <i className={"owf owf-"+this.state.code[1]}></i>  </div>
-                        <div className="col-sm-3 col-6">{this.state.day[2]}: {this.state.tempArr[2]}&ordm; <i className={"owf owf-"+this.state.code[2]}></i>  </div>
-                        <div className="col-sm-3 col-0">{this.state.day[3]}: {this.state.tempArr[3]}&ordm; <i className={"owf owf-"+this.state.code[3]}></i>  </div>
-                        <div className="col-sm-3 col-0">{this.state.day[4]}: {this.state.tempArr[4]}&ordm; <i className={"owf owf-"+this.state.code[4]}></i>  </div>
-                    </div>
+            <div className='forecast'>
+                <div className='tomorrow'>
+                    <WeatherForm city={city} unit={unit} onQuery={this.handleFormQuery}/>
+                    <WeatherDisplay {...tomorrow} day='tomorrow' unit={unit} masking={masking}/>
+                </div>
+                <div className='rests'>
+                    <WeatherTable list={rests} unit={unit} masking={masking}/>
                 </div>
             </div>
         );
     }
 
-    getForecast(city, unit){
+    getForecast(city, unit) {
         this.setState({
             loading: true,
             masking: true,
             city: city // set city state immediately to prevent input text (in WeatherForm) from blinking;
         }, () => { // called back after setState completes
-            getForecast(city, unit).then(weather => {
+            getForecast(city, unit).then(forecast => {
                 this.setState({
-                    ...weather,
+                    ...forecast,
                     loading: false
                 }, () => this.notifyUnitChange(unit));
             }).catch(err => {
-                console.error('Error getting weather', err);
+                console.error('Error getting forecast', err);
 
                 this.setState({
-                ...Forecast.getInitWeatherState(unit),
+                    ...Forecast.getInitForecastState(unit),
                     loading: false
                 }, () => this.notifyUnitChange(unit));
             });
@@ -91,8 +103,7 @@ export default class Forecast extends React.Component {
         }, 600);
     }
 
-    handleFormQueryForecast(city, unit){
-        console.log(this.state.code);
+    handleFormQuery(city, unit) {
         this.getForecast(city, unit);
     }
 

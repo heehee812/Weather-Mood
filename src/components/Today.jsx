@@ -1,12 +1,22 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+import {Alert} from 'reactstrap';
 
 import WeatherDisplay from 'components/WeatherDisplay.jsx';
 import WeatherForm from 'components/WeatherForm.jsx';
-import {getWeather} from 'api/open-weather-map.js';
+import PostForm from 'components/PostForm.jsx';
+import PostList from 'components/PostList.jsx';
+import {getWeather, cancelWeather} from 'api/open-weather-map.js';
+import {listPosts, createPost, createVote} from 'api/posts.js';
 
-import './weather.css';
+import './Today.css';
 
 export default class Today extends React.Component {
+    static propTypes = {
+        unit: PropTypes.string,
+        searchText: PropTypes.string,
+        onUnitChange: PropTypes.func
+    };
 
     static getInitWeatherState() {
         return {
@@ -23,29 +33,53 @@ export default class Today extends React.Component {
 
         this.state = {
             ...Today.getInitWeatherState(),
-            loading: true,
-            masking: true
+            weatherLoading: false,
+            masking: false,
+            postLoading: false,
+            posts: []
         };
 
-        this.handleFormQuery = this.handleFormQuery.bind(this);
+        this.handleWeatherQuery = this.handleWeatherQuery.bind(this);
+        this.handleCreatePost = this.handleCreatePost.bind(this);
+        this.handleCreateVote = this.handleCreateVote.bind(this);
     }
 
     componentDidMount() {
-        this.getWeather('Hsinchu', 'metric');
+        this.getWeather('Hsinchu', this.props.unit);
+        this.listPosts(this.props.searchText);
     }
 
     componentWillUnmount() {
-        if (this.state.loading) {
+        if (this.state.weatherLoading) {
             cancelWeather();
         }
     }
 
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.searchText !== this.props.searchText) {
+            this.listPosts(nextProps.searchText);
+        }
+    }
+
     render() {
+        const {unit} = this.props;
+        const {group, city, masking, posts, postLoading} = this.state;
+
+        document.body.className = `weather-bg ${group}`;
+        document.querySelector('.weather-bg .mask').className = `mask ${masking ? 'masking' : ''}`;
+
         return (
-            <div className={`today weather-bg ${this.state.group}`}>
-                <div className={`mask ${this.state.masking ? 'masking' : ''}`}>
-                    <WeatherDisplay {...this.state}/>
-                    <WeatherForm city={this.state.city} unit={this.props.unit} onQuery={this.handleFormQuery}/>
+            <div className='today'>
+                <div className='weather'>
+                    <WeatherForm city={city} unit={unit} onQuery={this.handleWeatherQuery}/>
+                    <WeatherDisplay {...this.state} day='today'/>
+                </div>
+                <div className='posts'>
+                    <PostForm onPost={this.handleCreatePost} />
+                    <PostList posts={posts} onVote={this.handleCreateVote} />{
+                        postLoading &&
+                        <Alert color='warning' className='loading'>Loading...</Alert>
+                    }
                 </div>
             </div>
         );
@@ -53,21 +87,21 @@ export default class Today extends React.Component {
 
     getWeather(city, unit) {
         this.setState({
-            loading: true,
+            weatherLoading: true,
             masking: true,
             city: city // set city state immediately to prevent input text (in WeatherForm) from blinking;
         }, () => { // called back after setState completes
             getWeather(city, unit).then(weather => {
                 this.setState({
                     ...weather,
-                    loading: false
+                    weatherLoading: false
                 }, () => this.notifyUnitChange(unit));
             }).catch(err => {
                 console.error('Error getting weather', err);
 
                 this.setState({
                     ...Today.getInitWeatherState(unit),
-                    loading: false
+                    weatherLoading: false
                 }, () => this.notifyUnitChange(unit));
             });
         });
@@ -79,7 +113,27 @@ export default class Today extends React.Component {
         }, 600);
     }
 
-    handleFormQuery(city, unit) {
+    listPosts(searchText) {
+        this.setState({
+            postLoading: true
+        }, () => {
+            listPosts(searchText).then(posts => {
+                this.setState({
+                    posts,
+                    postLoading: false
+                });
+            }).catch(err => {
+                console.error('Error listing posts', err);
+
+                this.setState({
+                    posts: [],
+                    postLoading: false
+                });
+            });
+        });
+    }
+
+    handleWeatherQuery(city, unit) {
         this.getWeather(city, unit);
     }
 
@@ -87,5 +141,21 @@ export default class Today extends React.Component {
         if (this.props.units !== unit) {
             this.props.onUnitChange(unit);
         }
+    }
+
+    handleCreatePost(mood, text) {
+        createPost(mood, text).then(() => {
+            this.listPosts(this.props.searchText);
+        }).catch(err => {
+            console.error('Error creating posts', err);
+        });
+    }
+
+    handleCreateVote(id, mood) {
+        createVote(id, mood).then(() => {
+            this.listPosts(this.props.searchText);
+        }).catch(err => {
+            console.error('Error creating vote', err);
+        });
     }
 }

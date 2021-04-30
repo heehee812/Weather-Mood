@@ -2,12 +2,6 @@ import axios from 'axios';
 
 // TODO replace the key with yours
 const key = '246570af92cbccd484a3bf15a4a4cd3e';
-const baseUrl = `http://api.openweathermap.org/data/2.5/weather?appid=${key}`;
-const baseUrlforecast= `http://api.openweathermap.org/data/2.5/forecast?appid=${key}`;
-var day= [];
-var temp= [];
-var description= [];
-var code= [];
 
 export function getWeatherGroup(code) {
     let group = 'na';
@@ -33,26 +27,26 @@ export function capitalize(string) {
     return string.replace(/\b\w/g, l => l.toUpperCase());
 }
 
+const weatherBaseUrl = `http://api.openweathermap.org/data/2.5/weather?appid=${key}`;
 let weatherSource = axios.CancelToken.source();
 
 export function getWeather(city, unit) {
-    var url = `${baseUrl}&q=${encodeURIComponent(city)}&units=${unit}`;
+    var url = `${weatherBaseUrl}&q=${encodeURIComponent(city)}&units=${unit}`;
 
     console.log(`Making request to: ${url}`);
 
     return axios.get(url, {cancelToken: weatherSource.token}).then(function(res) {
-        if (res.data.cod && res.data.message) {
+        if (res.data.cod && res.data.message)
             throw new Error(res.data.message);
-        } else {
-            return {
-                city: capitalize(city),
-                code: res.data.weather[0].id,
-                group: getWeatherGroup(res.data.weather[0].id),
-                description: res.data.weather[0].description,
-                temp: res.data.main.temp,
-                unit: unit // or 'imperial'
-            };
-        }
+
+        return {
+            city: capitalize(city),
+            code: res.data.weather[0].id,
+            group: getWeatherGroup(res.data.weather[0].id),
+            description: res.data.weather[0].description,
+            temp: res.data.main.temp,
+            unit: unit
+        };
     }).catch(function(err) {
         if (axios.isCancel(err)) {
             console.error(err.message, err);
@@ -63,37 +57,37 @@ export function getWeather(city, unit) {
 }
 
 export function cancelWeather() {
-    weatherSource.cancel('Request canceled');
+    weatherSource.cancel('Weather request canceled');
 }
 
+const forecastBaseUrl = `http://api.openweathermap.org/data/2.5/forecast/daily?appid=${key}&cnt=6`;
 let forecastSource = axios.CancelToken.source();
+
 export function getForecast(city, unit) {
-    // TODO
-    var url= `${baseUrlforecast}&q=${encodeURIComponent(city)}&units=${unit}`
+    var url = `${forecastBaseUrl}&q=${encodeURIComponent(city)}&units=${unit}`;
 
-    console.log(`making request to: ${url}`);
+    console.log(`Making request to: ${url}`);
 
-    return axios.get(url, {cancelToken: weatherSource.token}).then(function(res) {
-        if (res.data.cod && res.data.message) {
+    return axios.get(url, {cancelToken: forecastSource.token}).then(function(res) {
+        if (Number(res.data.cod) !== 200)
             throw new Error(res.data.message);
-        } else {
-            day= [];
-            temp= [];
-            description= [];
-            code= [];
-            dataToArr(res.data.list);
+
+        const list = res.data.list.map(forecast => {
             return {
-                city: capitalize(city),
-                code: code,
-                group: getWeatherGroup(res.data.list[0].weather[0].id),
-                description: res.data.list[0].weather[0].description,
-                descriptionArr: description,
-                temp: res.data.list[0].main.temp,
-                tempArr: temp,
-                day: day,
-                unit: unit // or 'imperial'
+                ts: forecast.dt,
+                code: forecast.weather[0].id,
+                group: getWeatherGroup(forecast.weather[0].id),
+                description: forecast.weather[0].main,
+                temp: forecast.temp.day
             };
-        }
+        });
+        list.shift(); // remove today
+
+        return {
+            city: capitalize(city),
+            unit: unit,
+            list
+        };
     }).catch(function(err) {
         if (axios.isCancel(err)) {
             console.error(err.message, err);
@@ -104,31 +98,5 @@ export function getForecast(city, unit) {
 }
 
 export function cancelForecast() {
-    // TODO
-    forecastSource.cancel('Request canceled');
-}
-
-function dataToArr(list){
-    var date= list[0].dt_txt.substring(0, 11);
-    for(var i= 1; i< list.length; i++){
-        var tmp= list[i].dt_txt.substring(0, 11);
-        if(tmp!= date){
-            day.push(transformDay(new Date(list[i].dt_txt).getDay()));
-            temp.push(list[i].main.temp);
-            description.push(list[i].weather[0].description);
-            code.push(list[i].weather[0].id)
-            date= tmp;
-        }
-    }
-}
-
-function transformDay(day){
-    if(day== 1) return "Mon";
-    else if(day== 2) return "Tue";
-    else if(day== 3) return "Wed";
-    else if(day== 4) return "Thur";
-    else if(day== 5) return "Fri";
-    else if(day== 6) return "Sat";
-    else if(day== 0) return "Sun";
-    return "na";
+    forecastSource.cancel('Forecast request canceled');
 }
