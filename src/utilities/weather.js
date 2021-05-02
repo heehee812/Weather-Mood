@@ -1,5 +1,4 @@
 export function getMoodIcon(group) {
-    console.log(group);
     switch (group) {
         case 'Thunder':
             return 'fa fa-bolt';

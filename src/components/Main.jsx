@@ -11,7 +11,9 @@ import {
     NavbarBrand,
     Nav,
     NavItem,
-    NavLink
+    NavLink,
+    Input,
+    Button
 } from 'reactstrap';
 
 import Today from 'components/Today.jsx';
@@ -25,17 +27,21 @@ export default class Main extends React.Component {
 
         this.state = {
             unit: 'metric',
-            navbarToggle: false
+            navbarToggle: false,
+            searchText: ''
         };
+        this.searchEl = null;
 
         this.handleNavbarToggle = this.handleNavbarToggle.bind(this);
+        this.handleUnitChange = this.handleUnitChange.bind(this);
+        this.handleClearSearch = this.handleClearSearch.bind(this);
         this.handleUnitChange = this.handleUnitChange.bind(this);
     }
 
     render() {
         return (
             <Router>
-                <div className={`main bg-faded ${this.state.group}`}>
+                <div className='main bg-faded'>
                     <div className='container'>
                         <Navbar color="faded" light expand="md">
                             <NavbarBrand className='text-info' href="/">WeatherMood</NavbarBrand>
@@ -49,17 +55,26 @@ export default class Main extends React.Component {
                                         <NavLink tag={Link} to='/forecast'>Forecast</NavLink>
                                     </NavItem>
                                 </Nav>
-                                <span className='navbar-text ml-auto'>DataLab</span>
+
+                                <div className='search ml-auto'>
+                                    <Input className='ml-auto' type='text' innerRef={this.searchEl} placeholder='Search' onKeyPress={this.handleSearchKeyPress} innerRef={e => this.searchEl = e}></Input>{
+                                        this.state.searchText &&
+                                        <i className='navbar-text fa fa-times' onClick={this.handleClearSearch}></i>
+                                    }
+                                </div>
                             </Collapse>
                         </Navbar>
                     </div>
 
                     <Route exact path="/" render={() => (
-                        <Today unit={this.state.unit} onUnitChange={this.handleUnitChange} />
+                        <Today unit={this.state.unit} searchText={this.state.searchText} onUnitChange={this.handleUnitChange} />
                     )}/>
                     <Route exact path="/forecast" render={() => (
                         <Forecast unit={this.state.unit} onUnitChange={this.handleUnitChange} />
                     )}/>
+                    <div className='footer'>
+                        DataLab.
+                    </div>
                 </div>
             </Router>
         );
@@ -69,6 +84,22 @@ export default class Main extends React.Component {
         this.setState((prevState, props) => ({
             navbarToggle: !prevState.navbarToggle
         }));
+    }
+
+    handleSearchKeyPress(e) {
+        var keyCode = e.keyCode || e.which;
+        if (keyCode === 13){
+            this.setState({
+                searchText: e.target.value
+            });
+        }
+    }
+
+    handleClearSearch() {
+        this.setState({
+            searchText: ''
+        });
+        this.searchEl.value = '';
     }
 
     handleUnitChange(unit) {

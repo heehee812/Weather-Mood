@@ -29,7 +29,8 @@ html, body, #root {
 }
 
 .weather-bg.rain {
-    background-image: url('images/w-rain-bg.jpg');
+    /* background-image: url('images/w-rain-bg.jpg'); */
+    background-color: blue;
 }
 
 .weather-bg.snow {
