@@ -67,14 +67,15 @@ function _createVote(id, mood) {
     const posts = _listPosts().map(p => {
         // TODO: Check p
         if (p.id === id) {
-            if(p.vote == "none"){
-                p.vote= mood;
+            console.log(p.voted);
+            if(p.voted == "none"){
+                p.voted= mood;
                 p[mood.toLowerCase() + 'Votes']++;
             }
-            else if(p.vote !=mood){
-                p[p.vote.toLowerCase() + 'Votes']= 0;
+            else if(p.voted !=mood){
+                p[p.voted.toLowerCase() + 'Votes']= 0;
                 p[mood.toLowerCase() + 'Votes']++;
-                p.vote= mood;
+                p.voted= mood;
             }
             else{
                 p[mood.toLowerCase() + 'Votes']= 0;
