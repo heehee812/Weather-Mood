@@ -92,7 +92,6 @@ export default class Forecast extends React.Component {
     }
 
     handleFormQueryForecast(city, unit){
-        console.log(this.state.code);
         this.getForecast(city, unit);
     }
 

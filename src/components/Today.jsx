@@ -46,7 +46,6 @@ export default class Today extends React.Component {
     }
 
     componentDidMount() {
-        console.log("in componentDidMount "+ this.props.searchText);
         this.getWeather('Hsinchu', 'metric');
         this.listPosts(this.props.searchText);
     }
@@ -58,13 +57,9 @@ export default class Today extends React.Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        console.log("Hello in will receive");
         if (nextProps.searchText !== this.props.searchText) {
-            console.log("iff");
             this.listPosts(nextProps.searchText);
         }
-        else
-            console.log("no!");
     }
 
     render() {
@@ -72,25 +67,22 @@ export default class Today extends React.Component {
         const {group, city, masking, posts, postLoading} = this.state;
 
         document.body.className = "weather-bg "+this.state.group;
-        // document.querySelector('.weather-bg .mask').className = `mask ${masking ? 'masking' : ''}`;
+        document.querySelector('.weather-bg .mask').className = `mask ${masking ? 'masking' : ''}`;
 
         return (
-            // <div className={`today weather-bg ${this.state.group}`}></div>
             <div className="today">
-                {/* <div className={`mask ${this.state.masking ? 'masking' : ''}`}> */}
-                    <div className='weather'>
-                        <WeatherDisplay {...this.state}/>
-                        <WeatherForm city={this.state.city} unit={this.props.unit} onQuery={this.handleFormQuery}/>
-                    </div>
-                    <br></br>
-                    {/* <div className='posts'>
-                        <PostForm onPost={this.handleCreatePost}/>
-                        <PostList posts={posts} onVote={this.handleCreateVote} />{
-                            postLoading &&
-                            <Alert color='warning' className='loading'>Loading...</Alert>
-                        }
-                    </div> */}
-                {/* </div> */}
+                <div className='weather'>
+                    <WeatherDisplay {...this.state}/>
+                    <WeatherForm city={this.state.city} unit={this.props.unit} onQuery={this.handleFormQuery}/>
+                </div>
+                <br></br>
+                <div className='posts'>
+                    <PostForm onPost={this.handleCreatePost}/>
+                    <PostList posts={posts} onVote={this.handleCreateVote} />{
+                        postLoading &&
+                        <Alert color='warning' className='loading'>Loading...</Alert>
+                    }
+                </div>
             </div>
         );
     }
@@ -124,12 +116,10 @@ export default class Today extends React.Component {
     }
 
     listPosts(searchText) {
-        console.log("in list post1");
         this.setState({
             postLoading: true
         }, () => {
             listPosts(searchText).then(posts => {
-                console.log("in list post2 ");
                 this.setState({
                     posts,
                     postLoading: false
@@ -146,7 +136,6 @@ export default class Today extends React.Component {
     }
 
     handleFormQuery(city, unit) {
-        console.log("in handle form query");
         this.getWeather(city, unit);
     }
 
@@ -158,7 +147,6 @@ export default class Today extends React.Component {
     
 
     handleCreatePost(mood, text) {
-        console.log("in handle create post");
         createPost(mood, text).then(() => {
             this.listPosts(this.props.searchText);
         }).catch(err => {
@@ -167,8 +155,6 @@ export default class Today extends React.Component {
     }
 
     handleCreateVote(id, mood) {
-        console.log("fffff "+id+" "+mood);
-        console.log(this.props.searchText);
         createVote(id, mood).then(() => {
             this.listPosts(this.props.searchText);
         }).catch(err => {

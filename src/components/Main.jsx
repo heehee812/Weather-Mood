@@ -33,7 +33,7 @@ export default class Main extends React.Component {
         this.searchEl = null;
 
         this.handleNavbarToggle = this.handleNavbarToggle.bind(this);
-        this.handleUnitChange = this.handleUnitChange.bind(this);
+        this.handleSearchKeyPress = this.handleSearchKeyPress.bind(this);
         this.handleClearSearch = this.handleClearSearch.bind(this);
         this.handleUnitChange = this.handleUnitChange.bind(this);
     }
