@@ -71,7 +71,7 @@ export function getForecast(city, unit) {
     // TODO
     var url= `${baseUrlforecast}&q=${encodeURIComponent(city)}&units=${unit}`
 
-    console.log(`making request to: ${url}`);
+    console.log(`Making request to: ${url}`);
 
     return axios.get(url, {cancelToken: weatherSource.token}).then(function(res) {
         if (res.data.cod && res.data.message) {

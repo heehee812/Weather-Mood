@@ -4,10 +4,18 @@ const webpack = require('webpack');
 const srcPath = path.resolve(__dirname, 'src');
 const distPath = path.resolve(__dirname, 'dist');
 
+const HtmlWebPackPlugin = require("html-webpack-plugin");
+
+const htmlPlugin = new HtmlWebPackPlugin({
+    template: "./index.html",
+    filename: "./index.html"
+  });
+
 module.exports = {
     context: srcPath,
     resolve: {
         alias: {
+            utilities: path.resolve(srcPath, 'utilities'),
             components: path.resolve(srcPath, 'components'),
             api: path.resolve(srcPath, 'api'),
             images: path.resolve(srcPath, 'images')
